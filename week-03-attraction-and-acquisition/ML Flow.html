@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Impeccker Consulting — ML Pipeline Explorer v6</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:#04030f;font-family:system-ui,-apple-system,sans-serif;overflow-x:hidden}
+
+/* ═══ WRAPPER ═══════════════════════════════════════════════════ */
+.W{background:linear-gradient(140deg,#07051a 0%,#110e38 55%,#0b1526 100%);
+   border-radius:16px;overflow:hidden;color:#f1eeff;
+   max-width:1140px;margin:14px auto;
+   display:flex;flex-direction:column;
+   box-shadow:0 0 80px rgba(168,120,252,.14),0 0 2px rgba(168,120,252,.4)}
+
+/* ═══ HEADER ════════════════════════════════════════════════════ */
+.H{display:flex;align-items:center;justify-content:space-between;
+   padding:11px 20px 10px;border-bottom:2px solid rgba(168,120,252,.35);
+   background:rgba(4,3,15,.92);flex-wrap:wrap;gap:10px;z-index:30;position:relative}
+
+.LA{display:flex;align-items:center;gap:11px}
+.BT b{color:#ede8ff;font-size:13.5px;font-weight:800;display:block;letter-spacing:.2px}
+.BT span{color:#a78bfa;font-size:10px;letter-spacing:.4px}
+
+/* TABS — always fully visible */
+.TABS{display:flex;gap:7px}
+.TB{padding:7px 17px;border-radius:22px;font-size:12px;font-weight:800;
+    cursor:pointer;transition:all .22s;letter-spacing:.3px;border:2px solid transparent;
+    white-space:nowrap}
+.TB[data-t="cls"]{background:#3b0764;border-color:#9333ea;color:#e9d5ff}
+.TB[data-t="cls"].act{background:#7c3aed;border-color:#d8b4fe;color:#fff;
+    box-shadow:0 0 18px rgba(168,120,252,.6),inset 0 1px 0 rgba(255,255,255,.12)}
+.TB[data-t="reg"]{background:#0c2740;border-color:#0284c7;color:#bae6fd}
+.TB[data-t="reg"].act{background:#0369a1;border-color:#7dd3fc;color:#fff;
+    box-shadow:0 0 18px rgba(56,189,248,.6),inset 0 1px 0 rgba(255,255,255,.12)}
+.TB[data-t="clu"]{background:#052e16;border-color:#16a34a;color:#a7f3d0}
+.TB[data-t="clu"].act{background:#065f46;border-color:#6ee7b7;color:#fff;
+    box-shadow:0 0 18px rgba(52,211,153,.6),inset 0 1px 0 rgba(255,255,255,.12)}
+
+/* SPEED CONTROLS — always visible */
+.CTRLS{display:flex;align-items:center;gap:7px}
+.CL{font-size:11px;font-weight:800;color:#c4b5fd;letter-spacing:.3px}
+.SB{padding:5px 13px;border-radius:11px;font-size:11px;font-weight:800;
+    cursor:pointer;transition:all .2s;
+    background:#2d1b69;border:2px solid #6d28d9;color:#ddd6fe;letter-spacing:.3px}
+.SB:hover{background:#3b1f82;border-color:#a78bfa}
+.SB.on{background:#6d28d9;border-color:#c4b5fd;color:#fff;
+    box-shadow:0 0 10px rgba(168,120,252,.5)}
+.PB{width:33px;height:33px;border-radius:50%;cursor:pointer;
+    border:2px solid #a78bfa;background:#4c1d95;color:#fff;
+    font-size:14px;display:flex;align-items:center;justify-content:center;
+    transition:all .2s;font-weight:800}
+.PB:hover{background:#5b21b6;box-shadow:0 0 10px rgba(168,120,252,.4)}
+
+/* ═══ STEP STRIP ════════════════════════════════════════════════ */
+.STRIP{display:flex;align-items:center;gap:10px;padding:7px 20px;
+       border-bottom:1px solid rgba(168,120,252,.2);
+       background:rgba(109,40,217,.13);flex-wrap:wrap}
+.SNUM{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;
+      justify-content:center;font-size:12px;font-weight:900;color:#fff;flex-shrink:0}
+.STXT{font-size:12px;font-weight:800;color:#ede8ff}
+.SSUB{font-size:10px;color:#a78bfa;font-style:italic}
+.PROG{flex:1;height:4px;border-radius:2px;background:rgba(255,255,255,.08);overflow:hidden;min-width:80px}
+.PROGF{height:100%;border-radius:2px;transition:width .6s ease}
+
+/* ═══ BODY ══════════════════════════════════════════════════════ */
+.BODY{display:flex;flex:1;min-height:530px}
+
+/* LEFT */
+.LP{width:160px;min-width:160px;border-right:1px solid rgba(168,120,252,.18);
+    padding:10px 8px;display:flex;flex-direction:column;gap:4px;overflow-y:auto}
+.PT{font-size:9px;color:#a78bfa;text-transform:uppercase;letter-spacing:1.3px;
+    font-weight:800;margin-bottom:5px;padding-left:3px}
+
+.AG{padding:8px 9px;border-radius:8px;cursor:pointer;transition:all .22s;
+    border:1.5px solid rgba(150,120,220,.25);background:rgba(109,40,217,.07)}
+.AG:hover{background:rgba(109,40,217,.2);border-color:rgba(168,120,252,.5)}
+.AG.on{background:rgba(109,40,217,.32);border-color:#a78bfa;
+       box-shadow:0 0 8px rgba(168,120,252,.25)}
+.AN{font-size:11px;color:#ede8ff;font-weight:800}
+.AD{font-size:9px;color:#9d99c0;margin-top:1px}
+
+/* SVG AREA */
+.SA{flex:1;overflow:hidden;position:relative;background:rgba(4,3,15,.3)}
+canvas#particles{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:5}
+#fsvg{display:block;width:100%;height:100%;position:relative;z-index:4}
+
+/* RIGHT */
+.RP{width:185px;min-width:185px;border-left:1px solid rgba(168,120,252,.18);
+    padding:10px 8px;display:flex;flex-direction:column;gap:5px;overflow-y:auto}
+
+.MC{padding:7px 9px;border-radius:7px;background:rgba(255,255,255,.05);
+    border:1px solid rgba(255,255,255,.12);margin-bottom:2px}
+.ML{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.6px}
+.MV{font-size:18px;font-weight:900;margin-top:2px;line-height:1}
+.MB{height:5px;border-radius:3px;background:rgba(255,255,255,.1);margin-top:6px;overflow:hidden}
+.MF{height:100%;border-radius:3px;transition:width 1.3s cubic-bezier(.4,0,.2,1)}
+
+.DC{padding:9px 10px;border-radius:8px;background:rgba(255,255,255,.04);
+    border:1px solid rgba(255,255,255,.12);flex:1;overflow:hidden;margin-top:3px}
+.DH{font-size:11px;font-weight:800;display:block;margin-bottom:5px}
+.DF{white-space:pre;font-size:9px;color:#c8c4e8;line-height:1.75;
+    font-family:'Courier New',monospace}
+
+/* ═══ TOOLTIP ═══════════════════════════════════════════════════ */
+.TT{position:fixed;background:rgba(15,12,40,.97);border:1px solid rgba(168,120,252,.4);
+    border-radius:10px;padding:10px 13px;font-size:10px;color:#c8c4e8;
+    line-height:1.6;max-width:220px;pointer-events:none;z-index:999;
+    box-shadow:0 8px 32px rgba(0,0,0,.6);opacity:0;transition:opacity .18s;
+    white-space:pre-line}
+.TT.vis{opacity:1}
+.TT b{color:#e9d5ff;font-weight:800;display:block;margin-bottom:4px;font-size:11px}
+
+/* ═══ DOTS ═══════════════════════════════════════════════════════ */
+.DR{display:flex;align-items:flex-start;gap:5px;
+    padding:8px 18px 10px;border-top:1px solid rgba(168,120,252,.18);
+    flex-wrap:wrap;background:rgba(4,3,15,.7)}
+.DW{display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer}
+.DOT{width:9px;height:9px;border-radius:50%;
+     background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.18);
+     transition:all .3s}
+.DOT.dn{border:none}
+.DOT.cu{transform:scale(1.55);border:none}
+.DL{font-size:7px;color:#6b6890;max-width:36px;text-align:center;
+    line-height:1.2;margin-top:1px;font-weight:600}
+
+/* SVG animations */
+@keyframes flowdash{to{stroke-dashoffset:-24}}
+@keyframes breathe{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.75;transform:scale(.98)}}
+@keyframes halo{0%,100%{stroke-opacity:.45}50%{stroke-opacity:.9}}
+@keyframes particle{0%{r:3;opacity:.9}100%{r:0;opacity:0}}
+
+.ad{stroke-dasharray:8 5;animation:flowdash 1.1s linear infinite}
+.ap{animation:breathe 1.9s ease infinite}
+.hl{animation:halo 1.4s ease infinite}
+</style>
+</head>
+<body>
+
+<div class="W" id="W">
+
+  <!-- HEADER -->
+  <div class="H">
+    <div class="LA">
+      <svg width="44" height="40" viewBox="0 0 100 80" fill="none">
+        <path d="M12 74 Q20 32 42 10" stroke="#7ab8d8" stroke-width="3" fill="none" stroke-linecap="round"/>
+        <path d="M19 74 Q26 34 44 14" stroke="#88c4e0" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+        <path d="M26 74 Q32 37 47 18" stroke="#a0d4ec" stroke-width="2" fill="none" stroke-linecap="round"/>
+        <path d="M88 74 Q80 32 58 10" stroke="#7ab8d8" stroke-width="3" fill="none" stroke-linecap="round"/>
+        <path d="M81 74 Q74 34 56 14" stroke="#88c4e0" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+        <path d="M74 74 Q68 37 53 18" stroke="#a0d4ec" stroke-width="2" fill="none" stroke-linecap="round"/>
+        <path d="M30 74 Q42 22 50 8 Q58 22 70 74 Z" fill="#1a3d70" stroke="#2a6aad" stroke-width="1.2"/>
+        <path d="M37 74 Q45 28 50 13 Q55 28 63 74 Z" fill="#2060a8"/>
+        <path d="M44 74 Q48 36 50 20 Q52 36 56 74 Z" fill="#3070b8" opacity=".7"/>
+      </svg>
+      <div class="BT"><b>Impeccker Consulting</b><span>ML Pipeline Explorer v6</span></div>
+    </div>
+    <div class="TABS" id="tabs">
+      <button class="TB act" data-t="cls">🔮 Classification</button>
+      <button class="TB" data-t="reg">📈 Regression</button>
+      <button class="TB" data-t="clu">🔵 Clustering</button>
+    </div>
+    <div class="CTRLS">
+      <span class="CL">Speed</span>
+      <button class="SB on" data-s="1">1×</button>
+      <button class="SB" data-s="2">2×</button>
+      <button class="SB" data-s="0.5">½×</button>
+      <button class="PB" id="pb">⏸</button>
+    </div>
+  </div>
+
+  <!-- STRIP -->
+  <div class="STRIP">
+    <div class="SNUM" id="snum">1</div>
+    <div>
+      <div class="STXT" id="stxt">Live Database</div>
+      <div class="SSUB" id="ssub">Spam Detection · Step 1 of 11</div>
+    </div>
+    <div class="PROG"><div class="PROGF" id="progf" style="width:9%"></div></div>
+  </div>
+
+  <!-- BODY -->
+  <div class="BODY">
+    <div class="LP" id="lp"></div>
+    <div class="SA" id="svgwrap">
+      <canvas id="particles"></canvas>
+      <svg id="fsvg" viewBox="0 0 520 490"></svg>
+    </div>
+    <div class="RP" id="rp"></div>
+  </div>
+
+  <div class="DR" id="dr"></div>
+</div>
+
+<!-- TOOLTIP -->
+<div class="TT" id="tt"></div>
+
+<script>
+// ══════════════════════════════════════════════════════════════════
+// DATA
+// ══════════════════════════════════════════════════════════════════
+var DATA={
+  cls:{
+    color:'#c084fc',label:'Spam Detection',icon:'🔮',
+    algos:[
+      {n:'Random Forest', d:'Ensemble of trees',    acc:92,prec:91,rec:93,f1:92},
+      {n:'XGBoost',       d:'Gradient boosting',    acc:94,prec:93,rec:95,f1:94},
+      {n:'Logistic Reg',  d:'Linear classifier',    acc:84,prec:83,rec:85,f1:84},
+      {n:'Naive Bayes',   d:'Probabilistic Bayes',  acc:81,prec:79,rec:83,f1:81},
+      {n:'SVM',           d:'Hyperplane separator', acc:89,prec:88,rec:90,f1:89},
+      {n:'Neural Net',    d:'Deep learning MLP',    acc:96,prec:95,rec:97,f1:96},
+      {n:'KNN',           d:'k-Nearest neighbours', acc:85,prec:84,rec:86,f1:85}
+    ],
+    flow:[
+      {t:'Live Email Stream',   tip:'IMAP Server Feed\nRate: ~2,400 emails/min\nLatency: <200ms ingestion',
+       d:'📧 Emails arriving NOW:\n"Win a prize! Click here"\n"Meeting at 3pm tomorrow"\n"You\'ve won £1,000,000!"\n"Invoice #4821 attached"\nSource: IMAP server feed\nRate: ~2,400 emails/min'},
+      {t:'Historical Email DB', tip:'SpamAssassin Corpus\n500,000 labelled emails\n2019–2024, 99.1% accuracy',
+       d:'🗄️ 500,000 labelled emails:\n• 320,000 → Ham (legit)\n• 180,000 → Spam\nDate range: 2019–2024\nSource: SpamAssassin\nLabel accuracy: 99.1%'},
+      {t:'Data Cleaning',       tip:'Remove noise before learning\nHTML strips, dedup, encoding\nReduces data by ~0.8%',
+       d:'🧹 Cleaning 500k emails:\n✓ Strip HTML & JavaScript\n✓ Fix UTF-8 encoding errors\n✓ Remove 3,200 duplicates\n✓ Drop 800 corrupt records\n✓ Normalise whitespace\nClean dataset: 496,000'},
+      {t:'Feature Engineering', tip:'Transform raw text → numbers\nTF-IDF, link count, CAPS ratio\n12 features per email',
+       d:'⚙️ 12 features per email:\n• TF-IDF vectors (5,000 terms)\n• Hyperlink count: 0–47\n• Sender reputation score\n• ALL CAPS ratio\n• Exclamation count\n• Attachment flag (Y/N)\n• Hour of day sent'},
+      {t:'Train / Test Split',  tip:'Stratified 80/20 split\nPreserves 36% spam ratio\nin both train and test sets',
+       d:'✂️ Splitting 496k emails:\n→ Train: 396,800  (80%)\n→ Test:   99,200  (20%)\nStratified split:\n• Train spam rate: 36.2%\n• Test spam rate:  36.1%\nSeed: 42 (reproducible)'},
+      {t:'5-Fold Cross-Val',    tip:'Optimise hyperparameters\non training data only\nPrevents data leakage',
+       d:'🔁 CV on 396k train set:\nFold 1 → val acc: 91.2%\nFold 2 → val acc: 92.4%\nFold 3 → val acc: 91.8%\nFold 4 → val acc: 92.1%\nFold 5 → val acc: 91.9%\nMean CV: 91.9% ± 0.4%'},
+      {t:'Algorithm Training',  tip:'Random Forest: 300 trees\nGridSearch tuned params\nTrain time: ~4 minutes',
+       d:'🤖 Random Forest training:\nn_estimators = 300\nmax_depth = 12\nmin_samples_leaf = 5\nclass_weight = balanced\nGridSearch optimised ✓\nTrain time: ~4 minutes'},
+      {t:'Testing on Hold-out', tip:'Never-seen 99.2k emails\nFair unbiased evaluation\nNo leakage from training',
+       d:'🧪 Run on 99.2k test emails:\nSpam caught   (TP): 34,100\nSpam missed   (FN):    900\nHam flagged   (FP):  1,200\nHam correct   (TN): 63,000\n─────────────────────\nRaw test accuracy: 97.9%'},
+      {t:'Evaluation Results',  tip:'Confusion matrix shows\nall 4 outcome categories\nF1 balances precision/recall',
+       d:'📊 Confusion matrix:\n          Ham    Spam\nAct Ham  63,000  1,200\nAct Spam    900 34,100\n─────────────────────\nAccuracy:  97.9%\nPrecision: 96.6%\nRecall:    97.4%\nF1 Score:  97.0%'},
+      {t:'Prediction Output',   tip:'Real-time classifications\nwith confidence scores\nRouted to correct folders',
+       d:'✅ Live classifications:\n"Win a prize!"\n  → SPAM   conf: 99.2% 🔴\n"Meeting at 3pm"\n  → HAM    conf: 98.7% 🟢\n"Invoice #4821"\n  → HAM    conf: 94.1% 🟢\n"Act now!! Free £££"\n  → SPAM   conf: 97.8% 🔴'},
+      {t:'Keep Improving',      tip:'Weekly retraining loop\nMonitor precision/recall drift\nFeedback from user actions',
+       d:'🔄 Continuous improvement:\n• Weekly retrain on new data\n• A/B test new feature sets\n• Monitor false positive rate\n• User feedback integrated\n• Drift detection active ⚡\n• Model v2.3 deployed 🚀'}
+    ]
+  },
+  reg:{
+    color:'#38bdf8',label:'House Price Prediction',icon:'📈',
+    algos:[
+      {n:'Linear Reg',   d:'OLS estimation',     rmse:4.2,r2:87,mae:3.1},
+      {n:'Ridge/Lasso',  d:'Regularised linear', rmse:3.9,r2:89,mae:2.9},
+      {n:'SVR',          d:'Support vector reg', rmse:3.5,r2:91,mae:2.6},
+      {n:'Random Forest',d:'Ensemble trees',     rmse:3.1,r2:93,mae:2.2},
+      {n:'XGBoost',      d:'Gradient boosting',  rmse:2.8,r2:95,mae:2.0},
+      {n:'LSTM',         d:'Sequence learning',  rmse:2.5,r2:96,mae:1.8}
+    ],
+    flow:[
+      {t:'Live Property Feed',  tip:'Rightmove/Zoopla API\n~180 new listings/hour\nReal-time price updates',
+       d:'🏠 Listings arriving NOW:\n"3-bed London SW4  £685k"\n"2-bed Manchester  £245k"\n"5-bed Bristol     £520k"\n"1-bed Leeds       £142k"\nSource: Rightmove/Zoopla\nRate: ~180 listings/hour'},
+      {t:'Historical Sales DB', tip:'300,000 verified sales\nCovering 2010–2024\nStratified across UK regions',
+       d:'🗄️ 300,000 historic sales:\n• London:    120,000 records\n• Manchester: 60,000 records\n• Bristol:    40,000 records\n• Other:      80,000 records\nDate range: 2010–2024'},
+      {t:'Data Cleaning',       tip:'Remove duplicates & errors\nFill missing sqft via median\nCap price outliers at 99.9th %',
+       d:'🧹 Cleaning 300k records:\n✓ Remove duplicate listings\n✓ Fill missing sqft (median)\n✓ Remove £0 / error prices\n✓ Cap outliers at 99.9th %\n✓ Standardise postcodes\nClean dataset: 294,000'},
+      {t:'Feature Engineering', tip:'14 features per property\nLocation, size, school, crime\nDistance to station key feature',
+       d:'⚙️ 14 features per property:\n• Lat/lng encoded location\n• Bedrooms & bathrooms\n• Floor area (sqft)\n• Ofsted school rating\n• Crime index (postcode)\n• Distance to station km\n• Property age & EPC band'},
+      {t:'Train / Test Split',  tip:'Stratified 75/25 by region\nEnsures geographic balance\nSeed 42 for reproducibility',
+       d:'✂️ Splitting 294k records:\n→ Train: 220,500  (75%)\n→ Test:   73,500  (25%)\nStratified by region:\nGeographic balance ensured\nSeed: 42 (reproducible)'},
+      {t:'10-Fold Cross-Val',   tip:'10 folds on training data\nGridSearch over depth & lr\nMean RMSE: £28,400',
+       d:'🔁 CV on 220k train set:\nAverage across 10 folds:\nRMSE: £28,400\nR²:    0.940\nMAE:  £19,200\nBest params:\n  depth=8, lr=0.05'},
+      {t:'Algorithm Training',  tip:'XGBoost: 500 estimators\nlr=0.05, max_depth=8\nTrain time: ~6 minutes',
+       d:'🤖 XGBoost Regressor:\nn_estimators = 500\nlearning_rate = 0.05\nmax_depth = 8\nsubsample = 0.8\ncolsample_bytree = 0.8\nTrain time: ~6 minutes'},
+      {t:'Testing on Hold-out', tip:'73,500 unseen properties\nTest RMSE: £27,800\nTest R²: 0.953',
+       d:'🧪 Run on 73.5k properties:\nSample prediction:\nActual:    £425,000\nPredicted: £431,200\nError:     +£6,200 (+1.5%)\n─────────────────────\nTest RMSE: £27,800\nTest R²:    0.953'},
+      {t:'Evaluation Results',  tip:'Outperforms estate agents\nby 2.2 percentage points\nMAPE of 6.2%',
+       d:'📊 Final performance:\nRMSE:   £27,800  ✓\nR²:      0.953   ✓\nMAE:    £18,900  ✓\nMAPE:    6.2%    ✓\n─────────────────\nBaseline (agent): 8.4%\nImprovement: +2.2%pts'},
+      {t:'Price Forecast',      tip:'Confidence intervals from\nprediction distribution\nUpdated every 24 hours',
+       d:'📈 Live predictions:\n"3-bed London SW4"\n  → £682,000 ±£28k 🏠\n"2-bed Manchester"\n  → £248,500 ±£22k 🏠\n"5-bed Bristol"\n  → £517,000 ±£31k 🏠\n"1-bed Leeds"\n  → £141,500 ±£15k 🏠'},
+      {t:'Keep Improving',      tip:'Monthly retraining cycle\nAdd new data sources\nMonitor RMSE drift',
+       d:'🔄 Continuous improvement:\n• Monthly retrain on sales\n• Add rental yield feature\n• Integrate planning data\n• Monitor RMSE drift alerts\n• Drift detection active ⚡\n• Model v1.8 deployed 🚀'}
+    ]
+  },
+  clu:{
+    color:'#34d399',label:'Customer Segmentation',icon:'🔵',
+    algos:[
+      {n:'K-Means',      d:'Centroid clustering',  sil:.72,ch:245,db:.42},
+      {n:'DBSCAN',       d:'Density-based',        sil:.68,ch:198,db:.51},
+      {n:'Hierarchical', d:'Agglomerative tree',   sil:.65,ch:180,db:.55},
+      {n:'GMM',          d:'Gaussian mixture',     sil:.70,ch:220,db:.46},
+      {n:'Spectral',     d:'Graph Laplacian',      sil:.74,ch:260,db:.39},
+      {n:'BIRCH',        d:'Tree-based clustering',sil:.62,ch:170,db:.58}
+    ],
+    flow:[
+      {t:'Live CRM Feed',        tip:'Salesforce CRM API\n~600 transactions/hour\nReal-time RFM updates',
+       d:'💳 Transactions NOW:\nCust #4821 → £89  (today)\nCust #1033 → £340 (today)\nCust #7710 → £0   (90 days)\nCust #2205 → £1,240 (today)\nSource: Salesforce CRM\nRate: ~600 txns/hour'},
+      {t:'Historical Purchases', tip:'2M records, 85k customers\nDate range: 2019–2024\nAvg spend £214/visit',
+       d:'🗄️ 2M purchase records:\n• 85,000 unique customers\n• Date range: 2019–2024\n• Avg spend: £214/visit\n• Avg frequency: 4.2×/yr\n• Max spend: £8,400/yr'},
+      {t:'Data Cleaning',        tip:'Remove bots & duplicates\nCap spend outliers at 0.5%\nNormalise timestamps',
+       d:'🧹 Cleaning 2M records:\n✓ Remove 230 bot txns\n✓ Merge duplicate IDs\n✓ Cap spend outliers .5%\n✓ Normalise timestamps\n✓ Fill null recency=365\nClean: 1,997,770 records'},
+      {t:'Feature Engineering',  tip:'RFM: Recency, Frequency\nMonetary — classic 3 features\nCaptures customer behaviour',
+       d:'⚙️ RFM per customer:\n• R: days since last buy\n• F: number of purchases\n• M: total £ spent\n──────────────────────\n#4821: R=1  F=18 M=£4,200\n#7710: R=90 F=2  M=£180\n#1033: R=1  F=6  M=£2,040'},
+      {t:'Normalise Features',   tip:'Min-Max scaling 0–1\nElbow method selects k=4\nZ-score alternative tested',
+       d:'📏 Min-Max scaling:\n           Before → After\nRecency  1–365d → 0.0–1.0\nFrequency  1–50 → 0.0–1.0\nMonetary £10–£8k→ 0.0–1.0\n──────────────────────\nElbow method → k=4\nOptimal clusters confirmed'},
+      {t:'PCA / Dim. Reduction', tip:'PCA 3D → 2D for plotting\n89% variance retained\n4 distinct clusters visible',
+       d:'🔬 PCA on RFM data:\n3 dimensions → 2D plot\nPC1 explains: 61% variance\nPC2 explains: 28% variance\nTotal retained: 89%\n──────────────────────\n4 clear clusters visible 👀'},
+      {t:'K-Means Running',      tip:'k-means++ initialisation\nConverged in 18 iterations\nInertia: 12,450',
+       d:'🤖 K-Means k=4:\nInit: k-means++ (stable)\nMax iterations: 300\nTolerance: 1e-4\nRandom state: 42\n──────────────────────\nConverged: 18 iterations\nInertia: 12,450'},
+      {t:'Cluster Validation',   tip:'Per-cluster silhouette\nVIP cluster scores 0.81\nOverall score: 0.72',
+       d:'🧪 Silhouette scores:\nCluster 0 (VIP):     0.81\nCluster 1 (At-Risk): 0.71\nCluster 2 (New):     0.68\nCluster 3 (Dormant): 0.67\n──────────────────────\nOverall Silhouette:  0.72'},
+      {t:'Evaluation Results',   tip:'3 metrics all confirm\ngood cluster separation\n85k customers labelled',
+       d:'📊 Cluster quality:\nSilhouette: 0.72 ✓\nCalinski-H: 245  ✓\nDavies-B:   0.42 ✓\n──────────────────────\n• VIP:       8,200 (10%)\n• At-Risk:  22,400 (26%)\n• New:      31,100 (37%)\n• Dormant:  23,300 (27%)'},
+      {t:'Segment Output',       tip:'Each customer gets a label\nplus a recommended action\nIntegrated with marketing CRM',
+       d:'🎯 Customer labels:\n#4821 → 🏆 VIP\n   Action: Loyalty rewards\n#7710 → ⚠️  At-Risk\n   Action: Win-back offer\n#1199 → 🌱 New Customer\n   Action: Onboarding email\n#3302 → 💤 Dormant\n   Action: Re-engagement'},
+      {t:'Keep Improving',       tip:'Quarterly RFM refresh\nAdd NPS & browse data\nTrack segment migration',
+       d:'🔄 Continuous improvement:\n• Quarterly RFM refresh\n• Add NPS score as feature\n• Test 5-cluster model\n• Track segment migration\n• Drift detection active ⚡\n• Model v2.1 deployed 🚀'}
+    ]
+  }
+};
+
+var STEPS=['Live DB','Historical DB','Cleaning','Feature Engg','Split/Norm','CV / PCA','Algorithm','Testing','Evaluation','Predict','Improve'];
+var STEP_COLORS=['#7c3aed','#7c3aed','#5b21b6','#4c1d95','#b45309','#92400e','#065f46','#064e3b','#9d174d','#831843','#1e3a5f'];
+
+var tab='cls', algo=0, step=0, playing=true, speed=1, timer=null;
+
+// ══ Node definitions (shared, updated per render) ══════════════════
+function getNodes(){
+  var d=DATA[tab], c=d.color;
+  return [
+    {x:72, y:12, w:106,h:42, lbl:'Live Database',       sub:'Real-time stream',                                  type:'db',  col:'#f472b6', si:0},
+    {x:298,y:12, w:106,h:42, lbl:'Historical DB',        sub:'Stored records',                                    type:'db',  col:'#fb923c', si:1},
+    {x:168,y:88, w:134,h:42, lbl:'Data Cleaning',        sub:'Dedupe · Fix · Filter',                             type:'rect',col:c,         si:2},
+    {x:168,y:162,w:134,h:42, lbl:'Feature Engineering',  sub:'Transform · Scale · Encode',                        type:'rect',col:c,         si:3},
+    {x:50, y:244,w:116,h:38, lbl:tab==='clu'?'Normalise':'Train / Test Split',
+                               sub:tab==='clu'?'Min-Max / Z-score':'80 / 20 stratified',                          type:'diam',col:'#facc15', si:4},
+    {x:306,y:244,w:116,h:38, lbl:tab==='clu'?'PCA / Dim. Reduce':'Cross Validation',
+                               sub:tab==='clu'?'Elbow → k=4':'k-Fold · GridSearch',                              type:'rect',col:'#facc15', si:5},
+    {x:158,y:326,w:142,h:46, lbl:'ML Algorithm',         sub:d.algos[algo].n,                                     type:'rect',col:c,         si:6,glow:true},
+    {x:318,y:326,w:114,h:46, lbl:'Model Testing',        sub:'Hold-out test set',                                  type:'rect',col:'#38bdf8', si:7},
+    {x:62, y:418,w:142,h:44, lbl:'Evaluation',           sub:tab==='cls'?'Confusion Matrix · AUC':tab==='reg'?'RMSE · R² · MAE':'Silhouette · CH', type:'hex',col:'#34d399',si:8},
+    {x:274,y:418,w:148,h:44, lbl:tab==='clu'?'Segment Output':tab==='reg'?'Price Forecast':'Predict & Prescribe',
+                               sub:tab==='cls'?'Spam/Ham + confidence':tab==='reg'?'Price ± CI':'VIP · At-Risk · New', type:'rect',col:c, si:9},
+    {x:168,y:490,w:134,h:34, lbl:'Keep Improving',       sub:'Retrain · Monitor · Deploy',                         type:'pill',col:'#f472b6', si:10}
+  ];
+}
+
+function getEdges(N){
+  function cx(n){return n.x+n.w/2;} function cy(n){return n.y+n.h/2;}
+  return [
+    {f:0,t:2,p:'M'+cx(N[0])+' '+(N[0].y+N[0].h)+' L'+cx(N[0])+' 78 L'+cx(N[2])+' 78 L'+cx(N[2])+' '+N[2].y},
+    {f:1,t:2,p:'M'+cx(N[1])+' '+(N[1].y+N[1].h)+' L'+cx(N[1])+' 78 L'+cx(N[2])+' 78 L'+cx(N[2])+' '+N[2].y},
+    {f:2,t:3,p:'M'+cx(N[2])+' '+(N[2].y+N[2].h)+' L'+cx(N[2])+' '+N[3].y},
+    {f:3,t:4,p:'M'+cx(N[3])+' '+(N[3].y+N[3].h)+' L'+cx(N[3])+' 234 L'+cx(N[4])+' 234 L'+cx(N[4])+' '+N[4].y},
+    {f:3,t:5,p:'M'+cx(N[3])+' '+(N[3].y+N[3].h)+' L'+cx(N[3])+' 234 L'+cx(N[5])+' 234 L'+cx(N[5])+' '+N[5].y},
+    {f:4,t:6,p:'M'+cx(N[4])+' '+(N[4].y+N[4].h)+' L'+cx(N[4])+' 314 L'+cx(N[6])+' 314 L'+cx(N[6])+' '+N[6].y},
+    {f:5,t:6,p:'M'+cx(N[5])+' '+(N[5].y+N[5].h)+' L'+cx(N[5])+' 314 L'+cx(N[6])+' 314 L'+cx(N[6])+' '+N[6].y},
+    {f:6,t:7,p:'M'+(N[6].x+N[6].w)+' '+cy(N[6])+' L'+N[7].x+' '+cy(N[7])},
+    {f:7,t:8,p:'M'+cx(N[7])+' '+(N[7].y+N[7].h)+' L'+cx(N[7])+' 408 L'+cx(N[8])+' 408 L'+cx(N[8])+' '+N[8].y},
+    {f:7,t:9,p:'M'+cx(N[7])+' '+(N[7].y+N[7].h)+' L'+cx(N[7])+' 408 L'+cx(N[9])+' 408 L'+cx(N[9])+' '+N[9].y},
+    {f:8,t:10,p:'M'+cx(N[8])+' '+(N[8].y+N[8].h)+' L'+cx(N[8])+' 480 L'+cx(N[10])+' 480 L'+cx(N[10])+' '+N[10].y},
+    {f:9,t:10,p:'M'+cx(N[9])+' '+(N[9].y+N[9].h)+' L'+cx(N[9])+' 480 L'+cx(N[10])+' 480 L'+cx(N[10])+' '+N[10].y},
+    {f:10,t:0,loop:true,p:'M'+cx(N[10])+' '+(N[10].y+N[10].h)+' L'+cx(N[10])+' 542 L24 542 L24 6 L'+N[0].x+' 6'}
+  ];
+}
+
+// ══ Canvas particle system ════════════════════════════════════════
+var canvas=document.getElementById('particles');
+var ctx=canvas.getContext('2d');
+var ptx=[];
+
+function resizeCanvas(){
+  var wrap=document.getElementById('svgwrap');
+  canvas.width=wrap.offsetWidth;
+  canvas.height=wrap.offsetHeight;
+}
+
+function spawnParticles(){
+  var d=DATA[tab]; var c=d.color;
+  var N=getNodes();
+  // spawn along active edge
+  var cx_=function(n){return n.x+n.w/2;};
+  var cy_=function(n){return n.y+n.h/2;};
+  var svgW=520, svgH=490;
+  var wrap=document.getElementById('svgwrap');
+  var scaleX=wrap.offsetWidth/svgW;
+  var scaleY=wrap.offsetHeight/svgH;
+
+  if(step>0 && step<=10){
+    var src=N[Math.min(step-1,10)];
+    var dst=N[Math.min(step,10)];
+    var sx=cx_(src)*scaleX, sy=(src.y+src.h/2)*scaleY;
+    var dx=cx_(dst)*scaleX, dy=(dst.y+dst.h/2)*scaleY;
+    for(var i=0;i<3;i++){
+      ptx.push({
+        x:sx,y:sy,tx:dx,ty:dy,
+        prog:Math.random()*0.3,
+        speed:0.004+Math.random()*0.006,
+        r:3+Math.random()*2,
+        col:c,life:1
+      });
+    }
+  }
+}
+
+function animParticles(){
+  resizeCanvas();
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  for(var i=ptx.length-1;i>=0;i--){
+    var p=ptx[i];
+    p.prog+=p.speed;
+    if(p.prog>=1){ptx.splice(i,1);continue;}
+    var x=p.x+(p.tx-p.x)*p.prog;
+    var y=p.y+(p.ty-p.y)*p.prog;
+    var alpha=p.prog<0.2?p.prog/0.2:p.prog>0.8?(1-p.prog)/0.2:1;
+    ctx.beginPath();
+    ctx.arc(x,y,p.r*(1-p.prog*0.5),0,Math.PI*2);
+    // parse hex color
+    var hex=p.col.replace('#','');
+    var r=parseInt(hex.slice(0,2),16),g=parseInt(hex.slice(2,4),16),b=parseInt(hex.slice(4,6),16);
+    ctx.fillStyle='rgba('+r+','+g+','+b+','+alpha+')';
+    // glow
+    ctx.shadowColor=p.col;
+    ctx.shadowBlur=8;
+    ctx.fill();
+    ctx.shadowBlur=0;
+  }
+  // keep spawning while playing
+  if(playing && Math.random()<0.15) spawnParticles();
+  requestAnimationFrame(animParticles);
+}
+animParticles();
+
+// ══ Event wiring ══════════════════════════════════════════════════
+document.getElementById('tabs').addEventListener('click',function(e){
+  var b=e.target.closest('.TB'); if(b) sw(b.getAttribute('data-t'));
+});
+document.querySelector('.CTRLS').addEventListener('click',function(e){
+  var sb=e.target.closest('.SB');
+  if(sb){setSp(parseFloat(sb.getAttribute('data-s')),sb);return;}
+  if(e.target.closest('.PB')) togglePlay();
+});
+document.getElementById('lp').addEventListener('click',function(e){
+  var ag=e.target.closest('.AG'); if(ag) pickAlgo(parseInt(ag.getAttribute('data-i')));
+});
+document.getElementById('dr').addEventListener('click',function(e){
+  var dw=e.target.closest('.DW');
+  if(dw){step=parseInt(dw.getAttribute('data-i'));updateStep();}
+});
+
+// SVG tooltip
+document.getElementById('fsvg').addEventListener('mousemove',function(e){
+  var el=e.target.closest('[data-si]');
+  var tt=document.getElementById('tt');
+  if(el){
+    var si=parseInt(el.getAttribute('data-si'));
+    var fl=DATA[tab].flow[si];
+    if(fl){
+      tt.innerHTML='<b>'+fl.t+'</b>'+fl.tip;
+      tt.classList.add('vis');
+      tt.style.left=(e.clientX+14)+'px';
+      tt.style.top=(e.clientY-10)+'px';
+    }
+  } else {
+    tt.classList.remove('vis');
+  }
+});
+document.getElementById('fsvg').addEventListener('mouseleave',function(){
+  document.getElementById('tt').classList.remove('vis');
+});
+
+// ══ Core logic ════════════════════════════════════════════════════
+function sw(t){
+  tab=t;algo=0;step=0;ptx=[];
+  document.querySelectorAll('.TB').forEach(function(b){b.classList.remove('act');});
+  document.querySelector('.TB[data-t="'+t+'"]').classList.add('act');
+  renderAll();resetAnim();
+}
+function setSp(s,btn){
+  speed=s;
+  document.querySelectorAll('.SB').forEach(function(b){b.classList.remove('on');});
+  btn.classList.add('on');
+  if(playing){stopA();startA();}
+}
+function togglePlay(){
+  playing=!playing;
+  document.getElementById('pb').textContent=playing?'⏸':'▶';
+  if(playing) startA(); else stopA();
+}
+function stopA(){clearTimeout(timer);}
+function startA(){
+  stopA();
+  timer=setTimeout(function(){
+    if(!playing)return;
+    step=(step+1)%STEPS.length;
+    updateStep();startA();
+  },Math.round(2100/speed));
+}
+function resetAnim(){stopA();step=0;updateStep();if(playing)startA();}
+function pickAlgo(i){
+  algo=i;
+  var c=DATA[tab].color;
+  document.querySelectorAll('.AG').forEach(function(el,j){
+    el.classList.toggle('on',j===i);
+    el.style.borderColor=j===i?c:'rgba(150,120,220,.25)';
+  });
+  renderRight();drawFlow();
+}
+function updateStep(){updateStrip();renderDots();renderRight();drawFlow();}
+
+function updateStrip(){
+  var d=DATA[tab],fl=d.flow[Math.min(step,d.flow.length-1)];
+  var snum=document.getElementById('snum');
+  snum.textContent=step+1;
+  snum.style.background=STEP_COLORS[step]||'#6d28d9';
+  document.getElementById('stxt').textContent=fl.t;
+  document.getElementById('ssub').textContent=d.label+' · Step '+(step+1)+' of 11';
+  var progf=document.getElementById('progf');
+  progf.style.width=Math.round((step+1)/11*100)+'%';
+  progf.style.background=d.color;
+}
+
+// ══ LEFT panel ════════════════════════════════════════════════════
+function renderLeft(){
+  var d=DATA[tab],c=d.color,h='<div class="PT">'+d.icon+' Algorithms</div>';
+  d.algos.forEach(function(a,i){
+    h+='<div class="AG'+(i===algo?' on':'')+'" data-i="'+i+'" style="border-color:'+(i===algo?c:'rgba(150,120,220,.25)')+'">'+
+       '<div class="AN">'+a.n+'</div><div class="AD">'+a.d+'</div></div>';
+  });
+  document.getElementById('lp').innerHTML=h;
+}
+
+// ══ RIGHT panel ═══════════════════════════════════════════════════
+function renderRight(){
+  var d=DATA[tab],a=d.algos[algo],c=d.color,h='<div class="PT">'+a.n+'</div>';
+  if(tab==='cls'){
+    [{l:'Accuracy',v:a.acc+'%',p:a.acc},{l:'Precision',v:a.prec+'%',p:a.prec},
+     {l:'Recall',v:a.rec+'%',p:a.rec},{l:'F1 Score',v:a.f1+'%',p:a.f1}].forEach(function(m){
+      h+='<div class="MC"><div class="ML" style="color:'+c+'">'+m.l+'</div>'+
+         '<div class="MV" style="color:'+c+'">'+m.v+'</div>'+
+         '<div class="MB"><div class="MF" style="width:'+m.p+'%;background:linear-gradient(90deg,'+c+'88,'+c+')"></div></div></div>';
+    });
+  } else if(tab==='reg'){
+    [{l:'RMSE (£k)',v:a.rmse,p:(1-a.rmse/10)*100},{l:'R² Score',v:a.r2+'%',p:a.r2},
+     {l:'MAE (£k)',v:a.mae,p:(1-a.mae/10)*100}].forEach(function(m){
+      h+='<div class="MC"><div class="ML" style="color:'+c+'">'+m.l+'</div>'+
+         '<div class="MV" style="color:'+c+'">'+m.v+'</div>'+
+         '<div class="MB"><div class="MF" style="width:'+m.p.toFixed(0)+'%;background:linear-gradient(90deg,'+c+'88,'+c+')"></div></div></div>';
+    });
+  } else {
+    [{l:'Silhouette',v:a.sil,p:a.sil*100},{l:'Calinski-H',v:a.ch,p:Math.min(100,a.ch/3)},
+     {l:'Davies-B',v:a.db,p:(1-a.db)*100}].forEach(function(m){
+      h+='<div class="MC"><div class="ML" style="color:'+c+'">'+m.l+'</div>'+
+         '<div class="MV" style="color:'+c+'">'+m.v+'</div>'+
+         '<div class="MB"><div class="MF" style="width:'+m.p.toFixed(0)+'%;background:linear-gradient(90deg,'+c+'88,'+c+')"></div></div></div>';
+    });
+  }
+  var fl=d.flow[Math.min(step,d.flow.length-1)];
+  h+='<div class="DC"><span class="DH" style="color:'+c+'">'+fl.t+'</span><div class="DF">'+fl.d+'</div></div>';
+  document.getElementById('rp').innerHTML=h;
+}
+
+// ══ DOTS ══════════════════════════════════════════════════════════
+function renderDots(){
+  var c=DATA[tab].color,h='';
+  STEPS.forEach(function(s,i){
+    var cls='DOT'+(i===step?' cu':i<step?' dn':'');
+    var bg=i===step?c:(i<step?c+'55':'');
+    h+='<div class="DW" data-i="'+i+'"><div class="'+cls+'" style="'+(bg?'background:'+bg+';border:none;':'')+'"></div>'+
+       '<div class="DL">'+s+'</div></div>';
+  });
+  document.getElementById('dr').innerHTML=h;
+}
+
+// ══ FLOW SVG ══════════════════════════════════════════════════════
+function drawFlow(){
+  var d=DATA[tab],c=d.color,svg=document.getElementById('fsvg');
+  var N=getNodes();
+  var E=getEdges(N);
+  function ncx(n){return n.x+n.w/2;}
+  function ncy(n){return n.y+n.h/2;}
+
+  var h='<defs>'+
+    '<filter id="g4"><feGaussianBlur stdDeviation="3.5" result="b"/>'+
+    '<feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>'+
+    '<filter id="g9"><feGaussianBlur stdDeviation="9" result="b"/>'+
+    '<feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>'+
+    '<filter id="g2"><feGaussianBlur stdDeviation="1.5" result="b"/>'+
+    '<feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>'+
+    '<marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">'+
+    '<path d="M1.5 2L8.5 5L1.5 8" fill="none" stroke="context-stroke" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></marker>'+
+    '<radialGradient id="bggrad" cx="40%" cy="35%" r="65%">'+
+    '<stop offset="0%" stop-color="#141030" stop-opacity=".9"/>'+
+    '<stop offset="100%" stop-color="#04030f" stop-opacity="1"/></radialGradient>'+
+    '</defs>';
+
+  // Background
+  h+='<rect width="520" height="490" fill="url(#bggrad)"/>';
+
+  // Nebula blobs
+  h+='<ellipse cx="150" cy="185" rx="100" ry="80" fill="#c084fc" opacity=".018"/>';
+  h+='<ellipse cx="380" cy="310" rx="90" ry="70" fill="#38bdf8" opacity=".02"/>';
+  h+='<ellipse cx="250" cy="440" rx="110" ry="55" fill="#f472b6" opacity=".018"/>';
+  h+='<ellipse cx="100" cy="400" rx="70" ry="90" fill="#34d399" opacity=".016"/>';
+
+  // Stars
+  var stars=[[52,34],[488,22],[30,280],[500,410],[260,8],[140,470],[420,60],[80,360],[460,200],[300,490],[510,150],[20,130],[380,470],[200,20],[450,350],[70,430],[440,120],[180,480],[320,30],[490,300],[160,240],[350,140],[90,100],[430,430],[270,460]];
+  stars.forEach(function(s){
+    var op=(.1+Math.random()*.2).toFixed(2);
+    h+='<circle cx="'+s[0]+'" cy="'+s[1]+'" r="'+(Math.random()<0.2?1.6:1.0)+'" fill="white" opacity="'+op+'"/>';
+  });
+
+  // Draw edges
+  E.forEach(function(e){
+    if(e.loop){
+      h+='<path d="'+e.p+'" fill="none" stroke="'+c+'" stroke-width="1.1"'+
+         ' stroke-dasharray="5 4" marker-end="url(#ah)" opacity=".32"/>';
+      h+='<text font-size="7.5" fill="'+c+'" opacity=".5" x="13" y="290"'+
+         ' writing-mode="tb" text-anchor="middle" font-weight="600">retrain loop</text>';
+      return;
+    }
+    var act=(step>e.f&&step<=e.t+1);
+    h+='<path d="'+e.p+'" fill="none"'+
+       ' stroke="'+(act?c:'rgba(200,185,255,0.13)')+'"'+
+       ' stroke-width="'+(act?2:.75)+'"'+
+       (act?' class="ad"':' stroke-dasharray="4 3"')+
+       ' marker-end="url(#ah)" opacity="'+(act?1:.4)+'"/>';
+    // secondary glow on active edges
+    if(act){
+      h+='<path d="'+e.p+'" fill="none" stroke="'+c+'" stroke-width="5" opacity=".08" filter="url(#g4)"/>';
+    }
+  });
+
+  // Draw nodes
+  N.forEach(function(n){
+    var act=n.si===step, done=n.si<step;
+    var op=done?.85:act?1:.27;
+    var fcx=ncx(n), fcy=ncy(n);
+    var fs=act&&n.glow?'filter="url(#g9)"':act?'filter="url(#g4)"':'';
+
+    h+='<g opacity="'+op+'"'+(act?' class="ap"':'')+' style="--gc:'+n.col+'" data-si="'+n.si+'">';
+
+    if(n.type==='db'){
+      var ry=9;
+      // body glow
+      if(act) h+='<ellipse cx="'+fcx+'" cy="'+(n.y+n.h/2)+'" rx="'+(n.w/2+8)+'" ry="'+(n.h/2+8)+'" fill="'+n.col+'" opacity=".08" filter="url(#g4)"/>';
+      h+='<ellipse cx="'+fcx+'" cy="'+(n.y+ry)+'" rx="'+(n.w/2)+'" ry="'+ry+'" fill="'+n.col+'" opacity=".22" '+(act?fs:'')+'/>';
+      h+='<rect x="'+n.x+'" y="'+(n.y+ry)+'" width="'+n.w+'" height="'+(n.h-ry)+'" fill="'+n.col+'" opacity=".1" rx="3"/>';
+      h+='<ellipse cx="'+fcx+'" cy="'+(n.y+ry)+'" rx="'+(n.w/2)+'" ry="'+ry+'" fill="none" stroke="'+n.col+'" stroke-width="1.5"/>';
+      h+='<ellipse cx="'+fcx+'" cy="'+(n.y+n.h)+'" rx="'+(n.w/2)+'" ry="'+ry+'" fill="none" stroke="'+n.col+'" stroke-width="1.5" opacity=".65"/>';
+      h+='<line x1="'+n.x+'" y1="'+(n.y+ry)+'" x2="'+n.x+'" y2="'+(n.y+n.h)+'" stroke="'+n.col+'" stroke-width="1.5" opacity=".8"/>';
+      h+='<line x1="'+(n.x+n.w)+'" y1="'+(n.y+ry)+'" x2="'+(n.x+n.w)+'" y2="'+(n.y+n.h)+'" stroke="'+n.col+'" stroke-width="1.5" opacity=".8"/>';
+      for(var r=0;r<3;r++) h+='<line x1="'+(fcx-13)+'" y1="'+(n.y+ry+6+r*5)+'" x2="'+(fcx+13)+'" y2="'+(n.y+ry+6+r*5)+'" stroke="'+n.col+'" stroke-width=".6" opacity=".35"/>';
+    } else if(n.type==='diam'){
+      if(act) h+='<polygon points="'+fcx+','+( n.y-6)+' '+(n.x+n.w+6)+','+fcy+' '+fcx+','+(n.y+n.h+6)+' '+(n.x-6)+','+fcy+'" fill="'+n.col+'" opacity=".12" filter="url(#g4)"/>';
+      h+='<polygon points="'+fcx+','+n.y+' '+(n.x+n.w)+','+fcy+' '+fcx+','+(n.y+n.h)+' '+n.x+','+fcy+'" fill="'+n.col+'" opacity=".18" '+(act?fs:'')+'/>';
+      h+='<polygon points="'+fcx+','+n.y+' '+(n.x+n.w)+','+fcy+' '+fcx+','+(n.y+n.h)+' '+n.x+','+fcy+'" fill="none" stroke="'+n.col+'" stroke-width="1.5"/>';
+    } else if(n.type==='hex'){
+      var off=12;
+      var pts2=''+( n.x+off)+','+n.y+' '+(n.x+n.w-off)+','+n.y+' '+(n.x+n.w)+','+fcy+' '+(n.x+n.w-off)+','+(n.y+n.h)+' '+(n.x+off)+','+(n.y+n.h)+' '+n.x+','+fcy;
+      if(act) h+='<polygon points="'+(n.x+off-4)+','+(n.y-4)+' '+(n.x+n.w-off+4)+','+(n.y-4)+' '+(n.x+n.w+4)+','+fcy+' '+(n.x+n.w-off+4)+','+(n.y+n.h+4)+' '+(n.x+off-4)+','+(n.y+n.h+4)+' '+(n.x-4)+','+fcy+'" fill="'+n.col+'" opacity=".1" filter="url(#g4)"/>';
+      h+='<polygon points="'+pts2+'" fill="'+n.col+'" opacity=".18" '+(act?fs:'')+'/>';
+      h+='<polygon points="'+pts2+'" fill="none" stroke="'+n.col+'" stroke-width="1.5"/>';
+    } else if(n.type==='pill'){
+      if(act) h+='<rect x="'+(n.x-5)+'" y="'+(n.y-5)+'" width="'+(n.w+10)+'" height="'+(n.h+10)+'" rx="'+(n.h/2+5)+'" fill="'+n.col+'" opacity=".1" filter="url(#g4)"/>';
+      h+='<rect x="'+n.x+'" y="'+n.y+'" width="'+n.w+'" height="'+n.h+'" rx="'+(n.h/2)+'" fill="'+n.col+'" opacity=".2" '+(act?fs:'')+'/>';
+      h+='<rect x="'+n.x+'" y="'+n.y+'" width="'+n.w+'" height="'+n.h+'" rx="'+(n.h/2)+'" fill="none" stroke="'+n.col+'" stroke-width="1.6"/>';
+    } else {
+      if(act) h+='<rect x="'+(n.x-5)+'" y="'+(n.y-5)+'" width="'+(n.w+10)+'" height="'+(n.h+10)+'" rx="12" fill="'+n.col+'" opacity=".1" filter="url(#g4)"/>';
+      h+='<rect x="'+n.x+'" y="'+n.y+'" width="'+n.w+'" height="'+n.h+'" rx="8" fill="'+n.col+'" opacity=".13" '+(act?fs:'')+'/>';
+      h+='<rect x="'+n.x+'" y="'+n.y+'" width="'+n.w+'" height="'+n.h+'" rx="8" fill="none" stroke="'+n.col+'" stroke-width="'+(act?2.2:1.2)+'"/>';
+    }
+
+    // Active animated halo ring
+    if(act){
+      var rr=n.type==='pill'?n.h/2+6:12;
+      h+='<rect x="'+(n.x-6)+'" y="'+(n.y-6)+'" width="'+(n.w+12)+'" height="'+(n.h+12)+'" rx="'+rr+'"'+
+         ' fill="none" stroke="'+n.col+'" stroke-width=".8" stroke-dasharray="5 3" class="ad hl" opacity=".55"/>';
+    }
+
+    // Labels
+    var lblY=n.sub?fcy-7:fcy;
+    h+='<text x="'+fcx+'" y="'+lblY+'" text-anchor="middle" dominant-baseline="central"'+
+       ' font-size="11.5" font-weight="800" fill="'+(act?'#ffffff':'#ede8ff')+'" opacity="'+(act?1:.93)+'">'+n.lbl+'</text>';
+    if(n.sub) h+='<text x="'+fcx+'" y="'+(fcy+9.5)+'" text-anchor="middle" dominant-baseline="central"'+
+       ' font-size="9" fill="'+n.col+'" opacity="'+(act?1:.76)+'">'+n.sub+'</text>';
+
+    // Active step badge
+    if(act){
+      h+='<circle cx="'+(n.x+n.w)+'" cy="'+n.y+'" r="9" fill="'+n.col+'" stroke="rgba(0,0,0,.5)" stroke-width="1"/>';
+      h+='<text x="'+(n.x+n.w)+'" y="'+n.y+'" text-anchor="middle" dominant-baseline="central"'+
+         ' font-size="9" font-weight="900" fill="#000">'+(n.si+1)+'</text>';
+    }
+    // Done tick
+    if(done){
+      h+='<text x="'+(n.x+n.w-4)+'" y="'+(n.y+4)+'" text-anchor="middle" dominant-baseline="central" font-size="10" opacity=".7">✓</text>';
+    }
+    h+='</g>';
+  });
+
+  // Step counter badge
+  var bg=STEP_COLORS[step]||'#6d28d9';
+  h+='<rect x="475" y="6" width="38" height="28" rx="14" fill="'+bg+'" opacity=".9"/>';
+  h+='<text x="494" y="20" text-anchor="middle" dominant-baseline="central" font-size="11" font-weight="900" fill="white">'+(step+1)+'/11</text>';
+
+  svg.innerHTML=h;
+}
+
+function renderAll(){renderLeft();renderRight();renderDots();updateStrip();drawFlow();}
+renderAll();
+startA();
+window.addEventListener('resize',function(){resizeCanvas();});
+</script>
+</body>
+</html>
